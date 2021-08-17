@@ -1,15 +1,19 @@
+//! This module implements parsing for the Forwarded header as defined by
+//! RFC 7239 and RFC 7230. You should generally interact with the [`ForwardedHeaderValue`] struct.
+#![warn(missing_docs)]
+
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
 use nonempty::NonEmpty;
 use thiserror::Error;
 
-/// This module implements parsing for the Forwarded header as defined by
-/// RFC 7239 and RFC 7230
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+/// HTTP protocol from the remote host
 pub enum Protocol {
+    /// HTTP
     Http,
+    /// HTTPS
     Https,
 }
 
@@ -26,6 +30,9 @@ impl FromStr for Protocol {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[allow(missing_docs)]
+/// Remote identifier. This can be an IP:port pair, a bare IP, an underscore-prefixed
+/// "obfuscated string", or unknown.
 pub enum Identifier {
     SocketAddr(SocketAddr),
     IpAddr(IpAddr),
@@ -39,7 +46,8 @@ impl Identifier {
         Identifier::String(t.to_string())
     }
 
-    /// Return the IP address for this identifier, if there is one
+    /// Return the IP address for this identifier, if there is one. This will extract it from the
+    /// SocketAddr if necessary
     pub fn ip(&self) -> Option<IpAddr> {
         match self {
             Identifier::SocketAddr(sa) => Some(sa.ip()),
@@ -78,6 +86,10 @@ impl FromStr for Identifier {
 }
 
 #[derive(Debug, Default)]
+/// A single forwarded-for line; there may be a sequence of these in a Forwarded header.
+///
+/// Any parts not specified will be None
+#[allow(missing_docs)]
 pub struct ForwardedStanza {
     pub forwarded_by: Option<Identifier>,
     pub forwarded_for: Option<Identifier>,
@@ -86,10 +98,12 @@ pub struct ForwardedStanza {
 }
 
 impl ForwardedStanza {
+    /// Get the forwarded-for IP, if one is present
     pub fn forwarded_for_ip(&self) -> Option<IpAddr> {
         self.forwarded_for.as_ref().and_then(|fa| fa.ip())
     }
 
+    /// Get the forwarded-by IP, if one is present
     pub fn forwarded_by_ip(&self) -> Option<IpAddr> {
         self.forwarded_by.as_ref().and_then(|fa| fa.ip())
     }
@@ -134,6 +148,7 @@ impl FromStr for ForwardedStanza {
     }
 }
 
+/// Iterator over stanzas in a ForwardedHeaderValue
 pub struct ForwardedHeaderValueIterator<'a> {
     head: Option<&'a ForwardedStanza>,
     tail: &'a [ForwardedStanza],
@@ -195,6 +210,7 @@ pub struct ForwardedHeaderValue {
 }
 
 impl ForwardedHeaderValue {
+    /// The number of valid stanzas in this value
     pub fn len(&self) -> usize {
         self.values.len()
     }
@@ -254,6 +270,17 @@ impl ForwardedHeaderValue {
     }
 
     /// Parse the value from a Forwarded header into this structure
+    /// ### Example
+    /// ```rust
+    /// # use forwarded_header_value::{ForwardedHeaderValue, ForwardedHeaderValueParseError};
+    /// # fn main() -> Result<(), ForwardedHeaderValueParseError> {
+    /// let input = "for=1.2.3.4;by=\"[::1]:1234\"";
+    /// let value = ForwardedHeaderValue::from_forwarded(input)?;
+    /// assert_eq!(value.len(), 1);
+    /// assert_eq!(value.remotest_forwarded_for_ip(), Some("1.2.3.4".parse()?));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn from_forwarded(header_value: &str) -> Result<Self, ForwardedHeaderValueParseError> {
         values_from_header(header_value)
             .map(|stanza| stanza.parse::<ForwardedStanza>())
@@ -265,6 +292,18 @@ impl ForwardedHeaderValue {
     }
 
     /// Parse the value from an X-Forwarded-For header into this structure
+    /// ### Example
+    /// ```rust
+    /// # use forwarded_header_value::{ForwardedHeaderValue, ForwardedHeaderValueParseError};
+    /// # fn main() -> Result<(), ForwardedHeaderValueParseError> {
+    /// let input = "1.2.3.4, 5.6.7.8";
+    /// let value = ForwardedHeaderValue::from_x_forwarded_for(input)?;
+    /// assert_eq!(value.len(), 2);
+    /// assert_eq!(value.remotest_forwarded_for_ip(), Some("1.2.3.4".parse()?));
+    /// assert_eq!(value.proximate_forwarded_for_ip(), Some("5.6.7.8".parse()?));
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn from_x_forwarded_for(
         header_value: &str,
     ) -> Result<Self, ForwardedHeaderValueParseError> {
@@ -294,6 +333,8 @@ impl IntoIterator for ForwardedHeaderValue {
 }
 
 #[derive(Error, Debug)]
+#[allow(missing_docs)]
+/// Errors that can occur while parsing a ForwardedHeaderValue
 pub enum ForwardedHeaderValueParseError {
     #[error("Header is empty")]
     HeaderIsEmpty,
