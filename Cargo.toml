@@ -1,0 +1,13 @@
+[package]
+name = "rust-forwarded-header-value"
+version = "0.1.0"
+edition = "2018"
+authors = ["James Brown <jbrown@easypost.com>"]
+description = "Parser for values from the Forwarded header (RFC 7239)"
+license = "ISC"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = "1"
+nonempty = "0.7"
