@@ -1,6 +1,7 @@
 //! This module implements parsing for the Forwarded header as defined by
 //! RFC 7239 and RFC 7230. You should generally interact with the [`ForwardedHeaderValue`] struct.
 #![warn(missing_docs)]
+#![forbid(unsafe_code)]
 
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
