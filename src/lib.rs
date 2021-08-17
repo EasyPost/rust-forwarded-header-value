@@ -76,7 +76,7 @@ impl FromStr for Identifier {
             } else {
                 Err(ForwardedHeaderValueParseError::InvalidAddress)
             }
-        } else if s.starts_with("_") {
+        } else if s.starts_with('_') {
             Ok(Identifier::String(s.to_string()))
         } else {
             Err(ForwardedHeaderValueParseError::InvalidObfuscatedNode(
@@ -214,6 +214,11 @@ impl ForwardedHeaderValue {
     /// The number of valid stanzas in this value
     pub fn len(&self) -> usize {
         self.values.len()
+    }
+
+    /// This can never be empty
+    pub fn is_empty(&self) -> bool {
+        false
     }
 
     /// Get the value farthest from this system (the left-most value)
