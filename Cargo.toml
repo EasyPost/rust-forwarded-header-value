@@ -13,4 +13,4 @@ keywords = ["http"]
 
 [dependencies]
 thiserror = "2"
-nonempty = "0.7"
+nonempty = "0.11"
